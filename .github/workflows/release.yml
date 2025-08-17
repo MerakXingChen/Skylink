@@ -25,7 +25,7 @@ jobs:
           distribution: "zulu"
           java-version: "17"
       - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
       - name: Install dependencies
         run: flutter pub get
       - name: Build APK
