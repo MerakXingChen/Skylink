@@ -6,10 +6,6 @@ on:
     tags:
       - "v*"
 
-env:
-  FLUTTER_VERSION: "3.24.0"
-  JAVA_VERSION: "21"
-
 permissions:
   contents: write
 
@@ -24,34 +20,18 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
       - uses: actions/setup-java@v4
         with:
           distribution: "zulu"
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: gradle
+          java-version: "17"
       - name: Accept Android SDK licenses
-        run: |
-          set -e
-          echo "Accepting Android SDK licenses..."
-          yes | sdkmanager --licenses || true
-          echo "Updating Android SDK..."
-          sdkmanager --update || true
-          echo "Installing required NDK version..."
-          sdkmanager "ndk;29.0.13599879" || true
+        run: yes | sdkmanager --licenses
       - name: Install dependencies
         run: flutter pub get
       - name: Build APK
-        run: |
-          echo "Building APK..."
-          flutter build apk --release --verbose
-          echo "APK build completed successfully"
+        run: flutter build apk --release
       - name: Build App Bundle
-        run: |
-          echo "Building App Bundle..."
-          flutter build appbundle --release --verbose
-          echo "App Bundle build completed successfully"
+        run: flutter build appbundle --release
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -80,24 +60,13 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Cache Linux dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/flutter
-            ~/.pub-cache
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev
           flutter pub get
       - name: Build Linux
-        run: flutter build linux --release --verbose
+        run: flutter build linux --release
       - name: Package Linux app
         run: |
           cd build/linux/x64/release/bundle
@@ -126,21 +95,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Cache Windows dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~\AppData\Local\Pub\Cache
-            ~\AppData\Roaming\Pub\Cache
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
       - name: Install dependencies
         run: flutter pub get
       - name: Build Windows
-        run: flutter build windows --release --verbose
+        run: flutter build windows --release
       - name: Package Windows app
         run: |
           cd build/windows/x64/runner/Release
@@ -169,21 +127,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Cache macOS dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/flutter
-            ~/.pub-cache
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
       - name: Install dependencies
         run: flutter pub get
       - name: Build macOS
-        run: flutter build macos --release --verbose
+        run: flutter build macos --release
       - name: Package macOS app
         run: |
           cd build/macos/Build/Products/Release
@@ -212,22 +159,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Cache Web dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/flutter
-            ~/.pub-cache
-          key: ${{ runner.os }}-flutter-web-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-web-
-            ${{ runner.os }}-flutter-
       - name: Install dependencies
         run: flutter pub get
       - name: Build Web
-        run: flutter build web --release --verbose
+        run: flutter build web --release
       - name: Package Web app
         run: |
           cd build/web
