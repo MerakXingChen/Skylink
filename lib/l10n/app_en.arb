@@ -1,0 +1,127 @@
+{
+  "@@locale": "en",
+  "appName": "Skylink SSH",
+  "@appName": {
+    "description": "The name of the application"
+  },
+  "serverPreview": "Server Preview",
+  "@serverPreview": {
+    "description": "Title for server preview screen"
+  },
+  "addServer": "Add Server",
+  "@addServer": {
+    "description": "Button text to add a new server"
+  },
+  "connect": "Connect",
+  "@connect": {
+    "description": "Button text to connect to server"
+  },
+  "disconnect": "Disconnect",
+  "@disconnect": {
+    "description": "Button text to disconnect from server"
+  },
+  "terminal": "Terminal",
+  "@terminal": {
+    "description": "Terminal tab label"
+  },
+  "fileManager": "File Manager",
+  "@fileManager": {
+    "description": "File manager tab label"
+  },
+  "monitoring": "Monitoring",
+  "@monitoring": {
+    "description": "Monitoring tab label"
+  },
+  "aiAssistant": "AI Assistant",
+  "@aiAssistant": {
+    "description": "AI assistant tab label"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings tab label"
+  },
+  "serverName": "Server Name",
+  "@serverName": {
+    "description": "Label for server name field"
+  },
+  "hostname": "Hostname",
+  "@hostname": {
+    "description": "Label for hostname field"
+  },
+  "port": "Port",
+  "@port": {
+    "description": "Label for port field"
+  },
+  "username": "Username",
+  "@username": {
+    "description": "Label for username field"
+  },
+  "password": "Password",
+  "@password": {
+    "description": "Label for password field"
+  },
+  "privateKey": "Private Key",
+  "@privateKey": {
+    "description": "Label for private key authentication"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Save button text"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button text"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button text"
+  },
+  "cpuUsage": "CPU Usage",
+  "@cpuUsage": {
+    "description": "CPU usage metric label"
+  },
+  "memoryUsage": "Memory Usage",
+  "@memoryUsage": {
+    "description": "Memory usage metric label"
+  },
+  "diskUsage": "Disk Usage",
+  "@diskUsage": {
+    "description": "Disk usage metric label"
+  },
+  "loadAverage": "Load Average",
+  "@loadAverage": {
+    "description": "Load average metric label"
+  },
+  "networkUpload": "Upload",
+  "@networkUpload": {
+    "description": "Network upload speed label"
+  },
+  "networkDownload": "Download",
+  "@networkDownload": {
+    "description": "Network download speed label"
+  },
+  "shutdown": "Shutdown",
+  "@shutdown": {
+    "description": "Shutdown server action"
+  },
+  "restart": "Restart",
+  "@restart": {
+    "description": "Restart server action"
+  },
+  "theme": "Theme",
+  "@theme": {
+    "description": "Theme settings label"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language settings label"
+  },
+  "about": "About",
+  "@about": {
+    "description": "About section label"
+  }
+}

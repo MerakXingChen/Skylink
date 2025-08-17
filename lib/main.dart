@@ -1,128 +1,328 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
-void main() {
-  runApp(const MyApp());
+import 'theme/index.dart';
+import 'routes/app_routes.dart';
+import 'providers/index.dart';
+import 'models/index.dart';
+import 'services/index.dart';
+import 'utils/index.dart';
+import 'generated/l10n.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Hive
+  await Hive.initFlutter();
+  
+  // Register Hive adapters
+  _registerHiveAdapters();
+  
+  // Initialize Isar database
+  await _initializeIsar();
+  
+  // Initialize services
+  await _initializeServices();
+  
+  // Set system UI overlay style
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+  
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+  
+  runApp(
+    const ProviderScope(
+      child: SkyLinkApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+void _registerHiveAdapters() {
+  // Register all Hive type adapters
+  Hive.registerAdapter(ServerAdapter());
+  Hive.registerAdapter(AppSettingsAdapter());
+  Hive.registerAdapter(AIConfigAdapter());
+  Hive.registerAdapter(SyncConfigAdapter());
+  Hive.registerAdapter(PrivateKeyAdapter());
+  Hive.registerAdapter(SSHSessionAdapter());
+  Hive.registerAdapter(ServerPreviewMetricsAdapter());
+  Hive.registerAdapter(WidgetLayoutAdapter());
+  Hive.registerAdapter(WindowStateAdapter());
+  
+  // Register enum adapters
+  Hive.registerAdapter(AuthTypeAdapter());
+  Hive.registerAdapter(ServerStatusAdapter());
+  Hive.registerAdapter(ConnectionStatusAdapter());
+  Hive.registerAdapter(AIProviderAdapter());
+  Hive.registerAdapter(SyncProviderAdapter());
+  Hive.registerAdapter(ThemeModeAdapter());
+  Hive.registerAdapter(LanguageAdapter());
+  Hive.registerAdapter(TerminalFontFamilyAdapter());
+  Hive.registerAdapter(WidgetTypeAdapter());
+  Hive.registerAdapter(WindowTypeAdapter());
+}
 
-  // This widget is the root of your application.
+Future<void> _initializeIsar() async {
+  try {
+    final dir = await getApplicationDocumentsDirectory();
+    final isar = await Isar.open(
+      [
+        ServerSchema,
+        AppSettingsSchema,
+        AIConfigSchema,
+        SyncConfigSchema,
+        PrivateKeySchema,
+        SSHSessionSchema,
+        ServerPreviewMetricsSchema,
+        WidgetLayoutSchema,
+        WindowStateSchema,
+      ],
+      directory: dir.path,
+      name: 'skylink',
+    );
+    
+    // Store Isar instance globally for services
+    IsarService.initialize(isar);
+  } catch (e) {
+    debugPrint('Failed to initialize Isar: $e');
+    // Continue without Isar - fallback to Hive only
+  }
+}
+
+Future<void> _initializeServices() async {
+  try {
+    // Initialize core services
+    await HiveService.initialize();
+    await SecureStorageService.initialize();
+    await LoggingService.initialize();
+    
+    // Initialize other services
+    await MonitoringService.initialize();
+    await SyncService.initialize();
+    
+    debugPrint('All services initialized successfully');
+  } catch (e) {
+    debugPrint('Failed to initialize services: $e');
+    // Continue with limited functionality
+  }
+}
+
+class SkyLinkApp extends ConsumerWidget {
+  const SkyLinkApp({super.key});
+  
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      initialRoute: '/',
-      builder: (BuildContext context, Widget? child) {
-        // 处理 MediaQuery 异常问题，特别是小米澎湃系统
-        MediaQueryData mediaQuery = MediaQuery.of(context);
-        double safeTop = mediaQuery.padding.top;
-
-        // 如果出现异常值，使用默认值替代
-        if (safeTop > 80 || safeTop < 0) {
-          print('Detected abnormal top padding: $safeTop, using fallback.');
-          safeTop = 24.0; // 合理默认值
-        }
-
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    final appSettings = ref.watch(appSettingsProvider);
+    
+    return MaterialApp.router(
+      title: 'SkyLink SSH',
+      debugShowCheckedModeBanner: false,
+      
+      // Router configuration
+      routerConfig: router,
+      
+      // Theme configuration
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: _getThemeMode(appSettings.themeMode),
+      
+      // Localization configuration
+      localizationsDelegates: const [
+        S.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: S.delegate.supportedLocales,
+      locale: _getLocale(appSettings.language),
+      
+      // Builder for additional configuration
+      builder: (context, child) {
         return MediaQuery(
-          data: mediaQuery.copyWith(
-            padding: mediaQuery.padding.copyWith(top: safeTop),
+          // Ensure text scaling doesn't break the UI
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(
+              MediaQuery.of(context).textScaler.scale(1.0).clamp(0.8, 1.2),
+            ),
           ),
           child: child ?? const SizedBox.shrink(),
         );
       },
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      routes: {
-        '/': (context) => const MyHomePage(title: 'Flutter Demo Home Page'),
-      },
     );
+  }
+  
+  ThemeMode _getThemeMode(ThemeMode themeMode) {
+    switch (themeMode) {
+      case ThemeMode.light:
+        return ThemeMode.light;
+      case ThemeMode.dark:
+        return ThemeMode.dark;
+      case ThemeMode.system:
+      default:
+        return ThemeMode.system;
+    }
+  }
+  
+  Locale? _getLocale(Language language) {
+    switch (language) {
+      case Language.english:
+        return const Locale('en');
+      case Language.chinese:
+        return const Locale('zh');
+      case Language.system:
+      default:
+        return null; // Use system locale
+    }
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+/// Global error handler
+class GlobalErrorHandler {
+  static void initialize() {
+    // Handle Flutter framework errors
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      LoggingService.logError(
+        'Flutter Error',
+        details.exception,
+        details.stack,
+      );
+    };
+    
+    // Handle other errors
+    PlatformDispatcher.instance.onError = (error, stack) {
+      LoggingService.logError('Platform Error', error, stack);
+      return true;
+    };
+  }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+/// App lifecycle handler
+class AppLifecycleHandler extends WidgetsBindingObserver {
+  static final AppLifecycleHandler _instance = AppLifecycleHandler._internal();
+  factory AppLifecycleHandler() => _instance;
+  AppLifecycleHandler._internal();
+  
+  void initialize() {
+    WidgetsBinding.instance.addObserver(this);
   }
-
+  
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+  }
+  
   @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _onAppResumed();
+        break;
+      case AppLifecycleState.paused:
+        _onAppPaused();
+        break;
+      case AppLifecycleState.detached:
+        _onAppDetached();
+        break;
+      case AppLifecycleState.inactive:
+        _onAppInactive();
+        break;
+      case AppLifecycleState.hidden:
+        _onAppHidden();
+        break;
+    }
+  }
+  
+  void _onAppResumed() {
+    debugPrint('App resumed');
+    // Reconnect SSH sessions if needed
+    SSHService.instance.resumeConnections();
+    // Resume monitoring
+    MonitoringService.instance.resume();
+  }
+  
+  void _onAppPaused() {
+    debugPrint('App paused');
+    // Pause monitoring to save battery
+    MonitoringService.instance.pause();
+    // Save current state
+    HiveService.instance.saveAll();
+  }
+  
+  void _onAppDetached() {
+    debugPrint('App detached');
+    // Clean up resources
+    _cleanup();
+  }
+  
+  void _onAppInactive() {
+    debugPrint('App inactive');
+    // Reduce background activity
+  }
+  
+  void _onAppHidden() {
+    debugPrint('App hidden');
+    // Handle app being hidden (iOS specific)
+  }
+  
+  void _cleanup() {
+    // Close all SSH connections
+    SSHService.instance.disconnectAll();
+    // Stop all services
+    MonitoringService.instance.stop();
+    SyncService.instance.stop();
+    // Close databases
+    HiveService.instance.close();
+    IsarService.instance.close();
+  }
+}
+
+/// Memory management helper
+class MemoryManager {
+  static void initialize() {
+    // Monitor memory usage and clean up when needed
+    _startMemoryMonitoring();
+  }
+  
+  static void _startMemoryMonitoring() {
+    // This would be implemented with platform-specific code
+    // For now, just log memory warnings
+    debugPrint('Memory monitoring initialized');
+  }
+  
+  static void clearCaches() {
+    // Clear image caches
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+    
+    // Clear other caches
+    debugPrint('Caches cleared');
+  }
+  
+  static void optimizeMemory() {
+    // Force garbage collection
+    // Note: This is generally not recommended in production
+    // but can be useful for debugging memory issues
+    debugPrint('Memory optimization requested');
   }
 }
