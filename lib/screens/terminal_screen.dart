@@ -142,7 +142,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          if (session != null) ..[
+          if (session != null) ...[
             IconButton(
               icon: Icon(
                 _showAIPanel ? Icons.smart_toy_rounded : Icons.smart_toy_outlined,

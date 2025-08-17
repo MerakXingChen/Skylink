@@ -253,7 +253,7 @@ class _ServerDetailsScreenState extends ConsumerState<ServerDetailsScreen> {
               ),
             ],
           ),
-          if (server.description != null) ..[
+          if (server.description != null) ...[
             AppSpacing.verticalS,
             Text(
               server.description!,
@@ -262,7 +262,7 @@ class _ServerDetailsScreenState extends ConsumerState<ServerDetailsScreen> {
               ),
             ),
           ],
-          if (server.tags.isNotEmpty) ..[
+          if (server.tags.isNotEmpty) ...[
             AppSpacing.verticalM,
             Wrap(
               spacing: AppSpacing.xs,

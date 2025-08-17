@@ -367,7 +367,7 @@ class _ServerPreviewScreenState extends ConsumerState<ServerPreviewScreen>
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      if (_searchQuery.isEmpty && _statusFilter == null) ..[
+                      if (_searchQuery.isEmpty && _statusFilter == null) ...[
                         const SizedBox(height: AppSpacing.lg),
                         ElevatedButton.icon(
                           onPressed: () {
